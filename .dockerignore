@@ -1,0 +1,26 @@
+# Docker ignore for this Spring Boot project
+target/
+.mvn/
+settings.xml
+.git
+.gitignore
+.idea
+.vscode
+*.log
+*.tmp
+*.class
+*.jar
+.DS_Store
+node_modules/
+
+# Maven wrapper files (optional)
+.mvn/
+
+# Skip local env files
+.env
+.env.local
+
+# speed up Docker context
+**/target/**
+**/.idea/**
+**/.vscode/**

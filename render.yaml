@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: tags-app
+    env: docker
+    repo: https://github.com/<YOUR_GITHUB_ORG_OR_USER>/<YOUR_REPO>
+    branch: main
+    plan: starter
+    disk: 0
+    buildCommand: ""
+    startCommand: ""
+    envVars:
+      - key: YOUTUBE_API_KEY
+        sync: false
+    # Optional: add health check path if you expose one (Actuator)
+    # healthCheckPath: /actuator/health
