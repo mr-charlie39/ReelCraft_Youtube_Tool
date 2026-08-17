@@ -1,0 +1,223 @@
+<nav th:fragment="navbar" xmlns:th="http://www.thymeleaf.org">
+
+    <!-- Route transition indicator (purely additive — see script at the bottom of this fragment) -->
+    <div id="routeProgress" class="route-progress" aria-hidden="true"></div>
+
+    <style>
+        .navbar-shell{ position:sticky; top:1rem; z-index:40; margin:1rem 0 2.25rem; }
+        .navbar-card{
+          background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-lg);
+          box-shadow:var(--shadow-sm); padding:.7rem 1rem .7rem 1.1rem;
+          -webkit-backdrop-filter:blur(10px); backdrop-filter:blur(10px);
+          transition:box-shadow .3s var(--ease), border-color .3s var(--ease), transform .3s var(--ease);
+        }
+        .navbar-shell.is-scrolled .navbar-card{ box-shadow:var(--shadow-md); border-color:var(--border-strong); }
+        .navbar-row{ display:flex; align-items:center; justify-content:space-between; gap:.85rem; }
+
+        /* ---- Brand mark ---- */
+        .brand{ display:flex; align-items:center; gap:.75rem; text-decoration:none; flex-shrink:0; group:brand; }
+        .brand-mark{ position:relative; display:inline-flex; }
+        .brand-mark-bg{ fill:var(--text); transition:fill .3s var(--ease); }
+        .brand-mark-play{ fill:var(--bg); transition:fill .3s var(--ease), transform .35s var(--ease); transform-origin:12px 18px; }
+        .brand:hover .brand-mark-play{ transform:scale(1.08); }
+        .brand-mark-dot-1{ fill:var(--teal); }
+        .brand-mark-dot-2{ fill:var(--orange); }
+        .brand-mark-dot-3{ fill:var(--violet); }
+        .brand-mark-dot-1, .brand-mark-dot-2, .brand-mark-dot-3{ transition:transform .4s var(--ease); transform-origin:center; }
+        .brand:hover .brand-mark-dot-1{ transform:translateX(1px); }
+        .brand:hover .brand-mark-dot-2{ transform:translateX(1.5px); }
+        .brand:hover .brand-mark-dot-3{ transform:translateX(2px); }
+
+        .brand-text{ display:flex; flex-direction:column; line-height:1.05; }
+        .brand-title{ font-family:var(--font-display); font-weight:600; font-size:1.2rem; letter-spacing:-.01em; color:var(--text); white-space:nowrap; }
+        .brand-eyebrow{ font-family:var(--font-mono); font-size:.6rem; letter-spacing:.18em; text-transform:uppercase; color:var(--text-faint); margin-top:.2rem; }
+
+        .nav-links{ display:flex; align-items:center; gap:.2rem; }
+        .nav-link{
+          position:relative; display:flex; align-items:center; gap:.5rem; text-decoration:none; color:var(--text-muted);
+          font-weight:500; font-size:.86rem; padding:.6rem .85rem; border-radius:var(--radius-sm);
+          transition:background .2s var(--ease), color .2s var(--ease);
+        }
+        .nav-link i{ font-size:.95rem; }
+        .nav-link:hover{ background:var(--surface-2); color:var(--text); }
+        .nav-link.active{ background:var(--nav-accent-tint); color:var(--nav-accent-dark); font-weight:600; }
+        .nav-link.active::after{
+          content:''; position:absolute; left:.85rem; right:.85rem; bottom:.28rem; height:2px;
+          background:currentColor; border-radius:2px; opacity:.55;
+        }
+        .nav-link:nth-child(1){ --nav-accent-tint:var(--teal-tint); --nav-accent-dark:var(--teal-dark); }
+        .nav-link:nth-child(2){ --nav-accent-tint:var(--orange-tint); --nav-accent-dark:var(--orange-dark); }
+        .nav-link:nth-child(3){ --nav-accent-tint:var(--violet-tint); --nav-accent-dark:var(--violet-dark); }
+
+        .theme-toggle-btn{
+          width:2.35rem; height:2.35rem; display:inline-flex; align-items:center; justify-content:center;
+          border-radius:var(--radius-sm); border:1px solid var(--border); background:var(--surface-2);
+          color:var(--text-muted); cursor:pointer; transition:background .2s var(--ease), color .2s var(--ease), transform .4s var(--ease), border-color .2s var(--ease);
+          flex-shrink:0;
+        }
+        .theme-toggle-btn:hover{ background:var(--surface); border-color:var(--border-strong); color:var(--text); transform:rotate(50deg); }
+        #themeToggle i{ font-size:.98rem; }
+
+        /* ---- Route / scrubber progress bar ---- */
+        .route-progress{
+          position:fixed; top:0; left:0; height:3px; width:0; opacity:0;
+          background:var(--accent, var(--teal)); border-radius:0 2px 2px 0;
+          z-index:9999; transition:width .2s ease, opacity .2s ease;
+        }
+        .route-progress::after{
+          content:''; position:absolute; top:50%; right:-5px; width:10px; height:10px;
+          background:var(--accent, var(--teal)); border:2px solid var(--surface);
+          transform:translateY(-50%) rotate(45deg); border-radius:2px;
+          box-shadow:var(--shadow-sm);
+        }
+        .route-progress::before{
+          content:''; position:absolute; inset:0; opacity:.5;
+          background-image:repeating-linear-gradient(90deg, rgba(255,255,255,.55) 0 6px, transparent 6px 14px);
+          mix-blend-mode:overlay; animation:scrub-run 1.1s linear infinite;
+        }
+        @keyframes scrub-run{ from{ background-position:0 0; } to{ background-position:-28px 0; } }
+
+        @media (max-width: 640px){
+          .nav-link span.nav-link-label{ display:none; }
+          .brand-eyebrow{ display:none; }
+        }
+        @media (prefers-reduced-motion: reduce){
+          .route-progress::before{ animation:none; }
+        }
+    </style>
+
+    <div class="navbar-shell" id="navbarShell">
+        <div class="navbar-card">
+            <div class="navbar-row">
+                <a href="/" class="brand">
+          <span class="brand-mark" aria-hidden="true">
+            <svg width="34" height="34" viewBox="0 0 36 36">
+              <rect x="0" y="0" width="36" height="36" rx="9" class="brand-mark-bg"></rect>
+              <path d="M10 10.5 L19 18 L10 25.5 Z" class="brand-mark-play"></path>
+              <circle cx="23.6" cy="12.4" r="2.1" class="brand-mark-dot-1"></circle>
+              <circle cx="26.6" cy="18" r="1.6" class="brand-mark-dot-2"></circle>
+              <circle cx="24.4" cy="23.6" r="1.15" class="brand-mark-dot-3"></circle>
+            </svg>
+          </span>
+                    <span class="brand-text">
+            <span class="brand-title">Reelcraft</span>
+            <span class="brand-eyebrow">SEO &middot; Thumbnails &middot; Data</span>
+          </span>
+                </a>
+
+                <div class="nav-links">
+                    <a href="/"
+                       class="nav-link"
+                       th:classappend="${activePage} == 'seo' ? 'active'">
+                        <i class="bi bi-hash"></i><span class="nav-link-label">SEO Tags</span>
+                    </a>
+                    <a href="/thumbnail"
+                       class="nav-link"
+                       th:classappend="${activePage} == 'thumbnails' ? 'active'">
+                        <i class="bi bi-aspect-ratio"></i><span class="nav-link-label">Thumbnails</span>
+                    </a>
+                    <a href="/video-details"
+                       class="nav-link"
+                       th:classappend="${activePage} == 'video' ? 'active'">
+                        <i class="bi bi-bar-chart-steps"></i><span class="nav-link-label">Video Data</span>
+                    </a>
+                </div>
+
+                <button id="themeToggle" type="button" class="theme-toggle-btn" aria-label="Toggle color theme">
+                    <i id="themeIcon" class="bi bi-sun-fill"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const toggleBtn = document.getElementById('themeToggle');
+        const icon = document.getElementById('themeIcon')
+      toggleBtn.addEventListener('click', function () {
+      const htmlTag = document.documentElement;
+      if (htmlTag.classList.contains('dark')) {
+        htmlTag.classList.remove('dark');
+        localStorage.setItem('theme', 'light');
+        icon.className = 'bi bi-sun-fill';
+      } else {
+        htmlTag.classList.add('dark');
+        localStorage.setItem('theme', 'dark');
+        icon.className = 'bi bi-moon-fill';
+      }
+      });
+      // Page load par check karo
+      if (localStorage.getItem('theme') === 'dark') {
+      document.documentElement.classList.add('dark');
+      icon.className = 'bi bi-moon-fill';
+      }
+    </script>
+
+    <!-- Page-transition indicator: purely additive, does not touch the theme-toggle script above
+         or any backend-bound attribute. Shows a video-scrubber style progress line + button
+         spinner while a link/form navigation is in flight. -->
+    <script>
+        (function () {
+          var bar = document.getElementById('routeProgress');
+          if (!bar) return;
+
+          function startProgress() {
+            bar.style.transition = 'none';
+            bar.style.width = '0%';
+            bar.style.opacity = '1';
+            void bar.offsetWidth;
+            bar.style.transition = 'width 2.4s cubic-bezier(.15,.8,.4,1), opacity .2s ease';
+            bar.style.width = '78%';
+          }
+
+          document.querySelectorAll('a[href]').forEach(function (link) {
+            if (link.target === '_blank' || link.getAttribute('href').indexOf('javascript:') === 0 || link.hash) return;
+            link.addEventListener('click', startProgress);
+          });
+
+          document.querySelectorAll('form').forEach(function (form) {
+            form.addEventListener('submit', function () {
+              startProgress();
+              var btn = form.querySelector('button[type="submit"]');
+              if (btn && !btn.disabled) {
+                btn.dataset.originalHtml = btn.innerHTML;
+                btn.disabled = true;
+                btn.classList.add('is-loading');
+                btn.innerHTML = '<span class="btn-spinner" aria-hidden="true"></span><span>Processing…</span>';
+              }
+            });
+          });
+
+          window.addEventListener('pageshow', function (evt) {
+            if (evt.persisted) {
+              bar.style.opacity = '0';
+              bar.style.width = '0%';
+              document.querySelectorAll('button.is-loading').forEach(function (btn) {
+                btn.disabled = false;
+                btn.classList.remove('is-loading');
+                if (btn.dataset.originalHtml) btn.innerHTML = btn.dataset.originalHtml;
+              });
+            }
+          });
+        })();
+    </script>
+
+    <!-- Cosmetic-only: adds a subtle shadow to the sticky navbar once the page scrolls.
+         Purely additive — reads scroll position, never touches form/data logic. -->
+    <script>
+        (function () {
+          var shell = document.getElementById('navbarShell');
+          if (!shell) return;
+          var ticking = false;
+          function onScroll() {
+            if (!ticking) {
+              window.requestAnimationFrame(function () {
+                shell.classList.toggle('is-scrolled', window.scrollY > 8);
+                ticking = false;
+              });
+              ticking = true;
+            }
+          }
+          window.addEventListener('scroll', onScroll, { passive: true });
+        })();
+    </script>
+</nav>
